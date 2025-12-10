@@ -1,6 +1,6 @@
 import { SwapForm } from '@/components/swap/SwapForm';
 
-const Index = () => {
+const MainPage = () => {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
       {/* Decorative elements */}
@@ -27,4 +27,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default MainPage;
