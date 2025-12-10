@@ -1,284 +1,90 @@
 # Token Swap Application
 
-A modern, responsive token swap interface built with React, TypeScript, and Vite. Features real-time price updates, server-side rendering with vite-react-ssg, and a beautiful glassmorphism UI design.
+A currency swap interface built with React, TypeScript, and Vite. The app fetches token prices from the Switcheo API and allows users to swap between different currencies with real-time exchange rate calculations.
 
-## Features
+## How it Works
 
-- **Real-Time Price Updates**: Token prices automatically refresh every 10 seconds from Switcheo API
-- **Instant Exchange Rate Calculation**: Live conversion rates between selected tokens
-- **Responsive Design**: Mobile-first approach with optimized layouts for all screen sizes
-- **Server-Side Generation (SSG)**: Pre-rendered pages for optimal SEO and performance
-- **Type-Safe**: Full TypeScript implementation with strict type checking
-- **Modern UI**: Glassmorphism design with smooth animations and transitions
-- **Form Validation**: Real-time input validation with user-friendly error messages
-- **Accessibility**: Keyboard navigation and screen reader support
+The swap form has two main inputs - a "from" token and a "to" token. Users select tokens from a searchable dialog, enter an amount, and see the calculated output based on current exchange rates.
 
-## Technology Stack
+**Token Selection**: Click the token selector to open a modal with all available tokens. The list is searchable and shows token icons. You can't select the same token for both inputs.
 
-### Core Framework
-- **React 18.3.1**: Modern React with hooks and concurrent features
-- **TypeScript 5.9.3**: Static type checking for enhanced code quality
-- **Vite 7.2.4**: Next-generation frontend tooling with fast HMR
+**Exchange Rate Calculation**: When both tokens are selected and an amount is entered, the app calculates the exchange rate by dividing the "from" token price by the "to" token price. The output amount updates automatically as you type.
 
-### UI & Styling
-- **Tailwind CSS 3.4.17**: Utility-first CSS framework
-- **shadcn/ui**: High-quality React components built with Radix UI primitives
-- **Radix UI**: Unstyled, accessible component primitives
-- **Lucide React**: Beautiful & consistent icon set
+**Token Swapping**: The arrow button between inputs swaps the selected tokens and reverses the exchange direction.
 
-### State Management & Data Fetching
-- **TanStack Query 5.83.0**: Powerful async state management
-- **React Hook Form 7.61.1**: Performant form validation
-- **Zod 3.25.76**: TypeScript-first schema validation
+**Validation**: The swap button is disabled until you select both tokens and enter a valid amount. Error messages appear directly on the button to guide you.
 
-### Build & Optimization
-- **vite-react-ssg 0.8.9**: Static site generation for React applications
-- **@vitejs/plugin-react-swc**: Fast refresh with SWC compiler
+**Price Updates**: Token prices refresh every 10 seconds from the API. The interface shows a note about this at the bottom of the form.
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd fancy-form
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-The application will be available at `http://localhost:8080`
-
-### Build for Production
-
-Generate static site with pre-rendered pages:
-```bash
-npm run build
-```
-
-Preview production build:
-```bash
-npm run preview
-```
-
-## Project Structure
+## Code Structure
 
 ```
 src/
-├── components/
-│   ├── swap/                # Swap form components
-│   │   ├── SwapForm.tsx    # Main swap container
-│   │   ├── SwapInput.tsx   # Token input with amount
-│   │   ├── SwapButton.tsx  # Token swap toggle button
-│   │   ├── TokenSelector.tsx # Token selection dialog
-│   │   ├── TokenIcon.tsx   # Token icon display
-│   │   └── ExchangeRate.tsx # Exchange rate display
-│   └── ui/                  # Reusable UI components (shadcn)
+├── components/swap/
+│   ├── SwapForm.tsx          # Main form component with state and logic
+│   ├── SwapInput.tsx         # Individual token input (reused for from/to)
+│   ├── TokenSelector.tsx     # Modal dialog for selecting tokens
+│   ├── SwapButton.tsx        # Arrow button for swapping tokens
+│   ├── ExchangeRate.tsx      # Exchange rate display
+│   └── TokenIcon.tsx         # Token icon with fallback
 ├── hooks/
-│   ├── useTokenPrices.ts   # Token price fetching hook
-│   └── use-toast.ts        # Toast notification hook
+│   └── useTokenPrices.ts     # Fetches and processes price data
 ├── types/
-│   └── token.ts            # TypeScript type definitions
+│   └── token.ts              # TypeScript interfaces
 ├── pages/
-│   ├── Index.tsx           # Main page
-│   └── NotFound.tsx        # 404 page
-├── App.tsx                 # Route configuration
-└── main.tsx                # SSG entry point
+│   ├── Index.tsx             # Main page
+│   └── NotFound.tsx          # 404 page
+├── App.tsx                   # Route configuration (object-based)
+└── main.tsx                  # SSG entry point
 ```
 
-## Implementation Details
+**SwapForm** manages all the state - selected tokens, amounts, and handles the swap logic. It uses `useMemo` to recalculate exchange rates whenever tokens or amounts change.
 
-### 1. Server-Side Generation (SSG)
+**useTokenPrices** is a React Query hook that fetches from `https://interview.switcheo.com/prices.json`. It filters out tokens without prices, deduplicates by currency (keeping the most recent), and refetches every 10 seconds.
 
-The application uses `vite-react-ssg` to pre-render pages at build time, improving SEO and initial page load performance.
+Token icons are stored in `public/icons/` as SVG files, named by currency code (ETH.svg, BTC.svg, etc.). The TokenIcon component handles missing icons by showing a colored circle with the currency initials.
 
-**Configuration** (src/main.tsx):
-```typescript
-import { ViteReactSSG } from 'vite-react-ssg';
-import { routes } from './App';
+## SSG Implementation
 
-export const createRoot = ViteReactSSG({ routes }, ({ router, routes }) => {
-  // Custom setup logic
-});
+The app uses `vite-react-ssg` to pre-render pages at build time. This improves initial load performance and SEO.
+
+**Why Route Objects**: vite-react-ssg requires routes to be defined as objects instead of JSX. In `App.tsx`, routes are exported as an array of `RouteObject` types. The layout component wraps all routes with providers (TanStack Query, Toaster, Tooltip) and uses `<Outlet />` for nested routing.
+
+**Entry Point**: `main.tsx` uses `ViteReactSSG()` instead of the standard React `createRoot()`. This function takes the routes and returns a pre-configured app that can be rendered on the server.
+
+**Build Process**: When you run `npm run build`, vite-react-ssg builds the app twice - once for the client and once for the server. It then renders each route on the server and outputs static HTML files. The HTML includes the fully rendered content, not just an empty root div. When the page loads, React hydrates the static HTML and the app becomes interactive.
+
+The `package.json` scripts use `vite-react-ssg` instead of `vite` for both dev and build commands.
+
+## Running the App
+
+```bash
+# Install dependencies
+npm install
+
+# Development server
+npm run dev
+
+# Production build (with SSG)
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-**Route Structure** (src/App.tsx):
-- Routes are defined as objects instead of JSX for SSG compatibility
-- Layout component wraps all routes with shared providers
-- React Router's `Outlet` enables nested routing
+The dev server runs on `http://localhost:8080`.
 
-### 2. Real-Time Price Updates
+## Technologies
 
-Token prices are fetched using TanStack Query with automatic refetching:
-
-**Implementation** (src/hooks/useTokenPrices.ts):
-- Fetches from Switcheo API: `https://interview.switcheo.com/prices.json`
-- Deduplicates tokens by currency (keeps most recent price)
-- Filters out tokens without valid prices
-- Auto-refetches every 10 seconds
-- 30-second stale time for cache optimization
-
-### 3. Exchange Rate Calculation
-
-Real-time conversion between selected tokens:
-
-**Algorithm** (src/components/swap/SwapForm.tsx):
-```typescript
-const rate = fromToken.price / toToken.price;
-const outputAmount = inputAmount * rate;
-```
-
-Features:
-- Memoized calculations for performance
-- Automatic recalculation on token or amount change
-- USD value display for both input and output
-- Formatted numbers with appropriate decimal places
-
-### 4. Token Icon Management
-
-Token icons are stored in the `public/icons/` directory:
-- SVG format for scalability
-- Named by currency code (e.g., `ETH.svg`, `BTC.svg`)
-- Fallback UI for missing icons
-- Optimized loading with proper error handling
-
-### 5. Component Architecture
-
-**SwapForm**: Main container managing state and business logic
-- Handles token selection and amount input
-- Calculates exchange rates and output amounts
-- Validates user input
-- Manages swap animation and submission
-
-**SwapInput**: Reusable input component
-- Amount input with numeric validation
-- Token selector integration
-- USD value display
-- Read-only mode for output
-
-**TokenSelector**: Modal dialog for token selection
-- Searchable token list
-- Token icons with fallback
-- Prevents selecting the same token twice
-- Accessible keyboard navigation
-
-### 6. Form Validation
-
-Multi-layer validation approach:
-1. **Type-level**: TypeScript ensures type safety
-2. **Runtime**: Real-time validation in `SwapForm`
-3. **User feedback**: Clear error messages on submit button
-
-Validation rules:
-- From token must be selected
-- To token must be selected
-- Amount must be entered
-- Amount must be positive
-- Amount cannot be zero
-
-### 7. Styling & Design System
-
-**Glassmorphism Effect**:
-- Semi-transparent backgrounds
-- Backdrop blur filters
-- Subtle borders and shadows
-- Glow effects on interactive elements
-
-**Responsive Design**:
-- Mobile-first approach
-- Breakpoints: sm (640px), md (768px), lg (1024px)
-- Fluid typography and spacing
-- Touch-friendly interactive elements
-
-**Dark Mode**:
-- Built-in dark theme
-- Consistent color palette
-- Optimized contrast ratios
-- CSS variable-based theming
-
-### 8. Performance Optimizations
-
-1. **Code Splitting**: Route-based lazy loading
-2. **Memoization**: `useMemo` and `useCallback` for expensive calculations
-3. **Query Optimization**: Smart caching and refetching with TanStack Query
-4. **SSG**: Pre-rendered HTML for instant initial load
-5. **Asset Optimization**: Compressed images and SVG icons
-6. **Tree Shaking**: Vite eliminates unused code
-
-### 9. Type Safety
-
-Comprehensive TypeScript types (src/types/token.ts):
-
-```typescript
-export interface Token {
-  currency: string;
-  date: string;
-  price: number;
-}
-
-export interface TokenWithIcon extends Token {
-  iconUrl: string;
-}
-
-export interface SwapState {
-  fromToken: TokenWithIcon | null;
-  toToken: TokenWithIcon | null;
-  fromAmount: string;
-  toAmount: string;
-}
-```
-
-## Scripts
-
-- `npm run dev` - Start development server with SSG
-- `npm run build` - Build for production with pre-rendering
-- `npm run build:dev` - Build in development mode
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+- React 18 + TypeScript
+- Vite (build tool)
+- vite-react-ssg (static generation)
+- TanStack Query (data fetching)
+- Tailwind CSS + shadcn/ui (styling)
+- React Router (routing)
 
 ## API Integration
 
-**Switcheo Prices API**:
-- Endpoint: `https://interview.switcheo.com/prices.json`
-- Returns array of token prices with timestamps
-- No authentication required
-- Updated regularly
+Fetches token prices from `https://interview.switcheo.com/prices.json`. The response contains an array of token objects with currency, date, and price. Some tokens appear multiple times with different dates - we keep the most recent price. Tokens without prices are excluded.
 
-## Future Enhancements
-
-- [ ] Wallet integration (MetaMask, WalletConnect)
-- [ ] Transaction history
-- [ ] Price charts and analytics
-- [ ] Multi-language support
-- [ ] Slippage tolerance settings
-- [ ] Gas fee estimation
-- [ ] Favorites and recent tokens
-
-## License
-
-MIT
-
-## Acknowledgments
-
-- Token prices powered by [Switcheo](https://switcheo.com/)
-- UI components from [shadcn/ui](https://ui.shadcn.com/)
-- Icons by [Lucide](https://lucide.dev/)
+Token icons come from the Switcheo token-icons repository and are stored locally in `public/icons/`.
