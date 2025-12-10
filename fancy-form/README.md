@@ -14,7 +14,7 @@ The swap form has two main inputs - a "from" token and a "to" token. Users selec
 
 **Validation**: The swap button is disabled until you select both tokens and enter a valid amount. Error messages appear directly on the button to guide you.
 
-**Price Updates**: Token prices refresh every 10 seconds from the API. The interface shows a note about this at the bottom of the form.
+**Price Updates**: Token prices refresh every 10 seconds from the API. Additionally, when you unfocus from the input field (blur event), prices are refetched after a 250ms debounce to ensure you're always seeing current rates while actively trading. The interface shows a note about the auto-refresh interval at the bottom of the form.
 
 ## Code Structure
 

@@ -11,6 +11,7 @@ interface SwapInputProps {
   otherToken?: TokenWithIcon | null;
   isOutput?: boolean;
   usdValue?: string;
+  onBlur?: () => void;
 }
 
 export function SwapInput({
@@ -23,6 +24,7 @@ export function SwapInput({
   otherToken,
   isOutput = false,
   usdValue,
+  onBlur,
 }: SwapInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -49,6 +51,7 @@ export function SwapInput({
           placeholder="0.00"
           value={amount}
           onChange={handleChange}
+          onBlur={onBlur}
           readOnly={isOutput}
           className={`swap-input ${isOutput ? 'text-muted-foreground' : ''}`}
         />

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { Loader2, Zap } from 'lucide-react';
 import { PRICE_UPDATE_INTERVAL, useTokenPrices } from '@/hooks/useTokenPrices';
 import { TokenWithIcon, SwapState } from '@/types/token';
@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 export function SwapForm() {
-  const { data: tokens, isLoading, error } = useTokenPrices();
+  const { data: tokens, isLoading, error, refetch } = useTokenPrices();
   const { toast } = useToast();
   const [isSwapping, setIsSwapping] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const refetchTimeoutRef = useRef<NodeJS.Timeout>();
   
   const [swapState, setSwapState] = useState<SwapState>({
     fromToken: null,
@@ -76,6 +77,18 @@ export function SwapForm() {
     }, 150);
   }, []);
 
+  const handleInputBlur = useCallback(() => {
+    // Clear any pending refetch
+    if (refetchTimeoutRef.current) {
+      clearTimeout(refetchTimeoutRef.current);
+    }
+
+    // Debounce refetch by 250ms
+    refetchTimeoutRef.current = setTimeout(() => {
+      refetch();
+    }, 250);
+  }, [refetch]);
+
   const handleSwap = async () => {
     if (!swapState.fromToken || !swapState.toToken || !swapState.fromAmount) {
       return;
@@ -134,6 +147,7 @@ export function SwapForm() {
           tokens={tokens || []}
           otherToken={swapState.toToken}
           usdValue={fromUsdValue}
+          onBlur={handleInputBlur}
         />
 
         {/* Swap Button */}
