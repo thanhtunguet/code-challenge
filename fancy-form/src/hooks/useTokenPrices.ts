@@ -33,12 +33,15 @@ async function fetchPrices(): Promise<TokenWithIcon[]> {
   );
 }
 
+export const PRICE_UPDATE_INTERVAL = 10000; // 10 seconds
+
+const STALE_TIME = 30000; // 30 seconds
+
 export function useTokenPrices() {
   return useQuery({
     queryKey: ['tokenPrices'],
     queryFn: fetchPrices,
-    staleTime: 60000, // 1 minute
-    refetchInterval: 30000, // 30 seconds
+    staleTime: STALE_TIME,
+    refetchInterval: PRICE_UPDATE_INTERVAL,
   });
 }
-

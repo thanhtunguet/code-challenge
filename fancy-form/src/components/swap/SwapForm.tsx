@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { Loader2, Zap } from 'lucide-react';
-import { useTokenPrices } from '@/hooks/useTokenPrices';
+import { PRICE_UPDATE_INTERVAL, useTokenPrices } from '@/hooks/useTokenPrices';
 import { TokenWithIcon, SwapState } from '@/types/token';
 import { SwapInput } from './SwapInput';
 import { SwapButton } from './SwapButton';
@@ -184,7 +184,7 @@ export function SwapForm() {
 
       {/* Info Footer */}
       <p className="text-center text-xs text-muted-foreground mt-6">
-        Prices update every 30 seconds • Powered by Switcheo
+        Prices update every {PRICE_UPDATE_INTERVAL / 1000} seconds • Powered by Switcheo
       </p>
     </div>
   );
